@@ -4,7 +4,8 @@ core/agent_tools/tool_manager.py
 Central manager for tool definitions and provider-specific conversions.
 """
 
-from typing import Any, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any, Optional
 
 from core.agents.base import ModelProvider
 from core.types.tool_config import Tool
@@ -73,7 +74,7 @@ class ToolManager:
                 })
             return converted
 
-        elif provider == ModelProvider.DEEPSEEK:
+        elif provider in {ModelProvider.DEEPSEEK, ModelProvider.XAI}:
             # DeepSeek shares OpenAI's tool schema.
             return list(normalized)
 

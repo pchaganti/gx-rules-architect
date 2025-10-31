@@ -58,6 +58,9 @@ class ArchitectFactory:
         elif provider == ModelProvider.GEMINI:
             from ..gemini import GeminiArchitect  # noqa: E402
             return GeminiArchitect(**common_args)
+        elif provider == ModelProvider.XAI:
+            from ..xai import XaiArchitect  # noqa: E402
+            return XaiArchitect(**common_args)
         else:
             raise ValueError(f"Unknown model provider: {provider}")
 

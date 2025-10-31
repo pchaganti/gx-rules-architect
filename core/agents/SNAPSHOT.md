@@ -31,6 +31,15 @@
 │   ├── prompting.py           # Provides prompt formatting helpers for Gemini models.
 │   ├── response_parser.py     # Parses responses from the Gemini API.
 │   └── tooling.py             # Handles tool configuration for Gemini models.
+├── xai/                       # Contains the implementation for the xAI (Grok) agent.
+│   ├── __init__.py            # Exposes the XaiArchitect class.
+│   ├── architect.py           # Implements the BaseArchitect interface for xAI models.
+│   ├── client.py              # Manages the OpenAI-compatible xAI client.
+│   ├── config.py              # Provides model defaults and base URL helpers.
+│   ├── prompting.py           # Houses prompt templates and formatting helpers.
+│   ├── request_builder.py     # Prepares xAI chat completion payloads.
+│   ├── response_parser.py     # Normalises xAI responses.
+│   └── tooling.py             # Resolves tool configurations for xAI models.
 └── openai/                    # Contains the implementation for the OpenAI agent.
     ├── __init__.py            # Exposes the OpenAIArchitect and legacy agent classes.
     ├── architect.py           # Implements the BaseArchitect interface for OpenAI models.

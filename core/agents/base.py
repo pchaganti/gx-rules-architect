@@ -45,6 +45,7 @@ class ModelProvider(Enum):
     OPENAI = "openai"
     DEEPSEEK = "deepseek"
     GEMINI = "gemini"
+    XAI = "xai"
 
 # ====================================================
 # Get Logger

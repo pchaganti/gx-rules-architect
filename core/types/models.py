@@ -181,6 +181,35 @@ DEEPSEEK_CHAT = ModelConfig(
     tools_config={"enabled": False, "tools": None}
 )
 
+# xAI Grok models
+GROK_4_0709 = ModelConfig(
+    provider=ModelProvider.XAI,
+    model_name="grok-4-0709",
+    reasoning=ReasoningMode.MEDIUM,
+    tools_config={"enabled": False, "tools": None}
+)
+
+GROK_4_FAST_REASONING = ModelConfig(
+    provider=ModelProvider.XAI,
+    model_name="grok-4-fast-reasoning",
+    reasoning=ReasoningMode.MEDIUM,
+    tools_config={"enabled": False, "tools": None}
+)
+
+GROK_4_FAST_NON_REASONING = ModelConfig(
+    provider=ModelProvider.XAI,
+    model_name="grok-4-fast-non-reasoning",
+    reasoning=ReasoningMode.DISABLED,
+    tools_config={"enabled": False, "tools": None}
+)
+
+GROK_CODE_FAST = ModelConfig(
+    provider=ModelProvider.XAI,
+    model_name="grok-code-fast-1",
+    reasoning=ReasoningMode.MEDIUM,
+    tools_config={"enabled": False, "tools": None}
+)
+
 # Google Gemini Models
 GEMINI_FLASH = ModelConfig(
     provider=ModelProvider.GEMINI,

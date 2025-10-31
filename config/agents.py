@@ -27,6 +27,10 @@ from core.types.models import (
     GPT5_DEFAULT,
     GPT5_HIGH,
     GPT5_MINIMAL,
+    GROK_4_0709,
+    GROK_4_FAST_NON_REASONING,
+    GROK_4_FAST_REASONING,
+    GROK_CODE_FAST,
     O3_HIGH,
     O3_LOW,
     O3_MEDIUM,
@@ -197,6 +201,30 @@ MODEL_PRESETS: dict[str, PresetDefinition] = {
         label="DeepSeek Chat",
         description="Conversational DeepSeek model.",
         provider=ModelProvider.DEEPSEEK,
+    ),
+    "grok-4-0709": _preset(
+        config=GROK_4_0709,
+        label="Grok 4 (July 09)",
+        description="Latest Grok 4 release with balanced reasoning effort.",
+        provider=ModelProvider.XAI,
+    ),
+    "grok-4-fast-reasoning": _preset(
+        config=GROK_4_FAST_REASONING,
+        label="Grok 4 Fast (Reasoning)",
+        description="Lower latency Grok 4 reasoning tier.",
+        provider=ModelProvider.XAI,
+    ),
+    "grok-4-fast-non-reasoning": _preset(
+        config=GROK_4_FAST_NON_REASONING,
+        label="Grok 4 Fast (Non-Reasoning)",
+        description="Cost-efficient Grok tier without reasoning tokens.",
+        provider=ModelProvider.XAI,
+    ),
+    "grok-code-fast": _preset(
+        config=GROK_CODE_FAST,
+        label="Grok Code Fast",
+        description="Grok code assistant tuned for reasoning over codebases.",
+        provider=ModelProvider.XAI,
     ),
 }
 
