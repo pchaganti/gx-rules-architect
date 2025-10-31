@@ -28,10 +28,12 @@ class _OpenAIFakeClient:
 
 class OpenAIArchitectParsingTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        # Monkeypatch module-level client with our fake
-        import core.agents.openai as openai_mod
+        # Monkeypatch the package client singleton with our fake
+        from core.agents.openai import client as openai_client_mod
+
         self.fake_client = _OpenAIFakeClient()
-        openai_mod.openai_client = self.fake_client  # type: ignore
+        openai_client_mod._client = self.fake_client  # type: ignore[attr-defined]
+        self.addCleanup(lambda: setattr(openai_client_mod, "_client", None))
 
     async def test_reasoning_effort_param_for_o3(self):
         arch = OpenAIArchitect(model_name="o3")

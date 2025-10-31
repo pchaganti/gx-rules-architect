@@ -5,6 +5,7 @@ os.environ.setdefault("OPENAI_API_KEY", "test")
 
 from core.agents.base import ReasoningMode
 from core.agents.openai import OpenAIArchitect
+from core.agents.openai.response_parser import parse_response
 
 
 class OpenAIResponsesTests(unittest.TestCase):
@@ -16,9 +17,10 @@ class OpenAIResponsesTests(unittest.TestCase):
         )
 
     def test_prepare_request_uses_responses_api(self) -> None:
-        api_type, params = self.architect._prepare_request("Hello world")
+        prepared = self.architect._prepare_request("Hello world")
+        params = prepared.payload
 
-        self.assertEqual(api_type, "responses")
+        self.assertEqual(prepared.api, "responses")
         self.assertEqual(params["model"], "gpt-5")
         self.assertEqual(params.get("reasoning"), {"effort": "minimal"})
         self.assertEqual(params.get("text"), {"verbosity": "low"})
@@ -41,14 +43,15 @@ class OpenAIResponsesTests(unittest.TestCase):
             ]
         }
 
-        findings, tool_calls = self.architect._parse_responses_output(payload)
+        parsed = parse_response(payload, "responses")
 
-        self.assertEqual(findings, "Result body")
-        self.assertIsNotNone(tool_calls)
-        self.assertEqual(len(tool_calls or []), 1)
-        self.assertEqual(tool_calls[0]["type"], "function")
-        self.assertEqual(tool_calls[0]["function"]["name"], "summarize")
-        self.assertEqual(tool_calls[0]["function"]["arguments"], '{"topic": "ai"}')
+        self.assertEqual(parsed.findings, "Result body")
+        tool_calls = parsed.tool_calls or []
+        self.assertEqual(len(tool_calls), 1)
+        call = tool_calls[0]
+        self.assertEqual(call["type"], "function")
+        self.assertEqual(call["function"]["name"], "summarize")
+        self.assertEqual(call["function"]["arguments"], '{"topic": "ai"}')
 
 
 if __name__ == "__main__":
