@@ -11,7 +11,10 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import tomli
+try:  # Python 3.11+ ships tomllib in the standard library
+    import tomllib as tomli  # type: ignore[import-not-found]
+except ModuleNotFoundError:  # pragma: no cover - exercised on older interpreters
+    import tomli  # type: ignore[no-redef]
 import tomli_w
 from platformdirs import user_config_dir
 
