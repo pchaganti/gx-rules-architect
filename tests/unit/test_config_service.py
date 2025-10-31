@@ -15,6 +15,7 @@ class ConfigServiceTestCase(unittest.TestCase):
         self._env_backup = {}
         for env_var in self.config_service.PROVIDER_ENV_MAP.values():
             self._env_backup[env_var] = os.environ.pop(env_var, None)
+        self._verbosity_backup = os.environ.pop(self.config_service.VERBOSITY_ENV_VAR, None)
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
@@ -24,6 +25,10 @@ class ConfigServiceTestCase(unittest.TestCase):
                 os.environ.pop(env_var, None)
             else:
                 os.environ[env_var] = value
+        if self._verbosity_backup is None:
+            os.environ.pop(self.config_service.VERBOSITY_ENV_VAR, None)
+        else:
+            os.environ[self.config_service.VERBOSITY_ENV_VAR] = self._verbosity_backup
 
     def test_set_provider_key_persists_and_sets_env(self) -> None:
         self.config_service.set_provider_key("openai", "test-key-123")
@@ -49,3 +54,24 @@ class ConfigServiceTestCase(unittest.TestCase):
         self.config_service.set_phase_model("phase1", None)
         cfg = self.config_service.load_config()
         self.assertNotIn("phase1", cfg.models)
+
+    def test_set_logging_verbosity_normalizes_and_persists(self) -> None:
+        self.config_service.set_logging_verbosity("Verbose")
+        cfg = self.config_service.load_config()
+        self.assertEqual(cfg.verbosity, "verbose")
+
+        self.config_service.set_logging_verbosity(None)
+        cfg = self.config_service.load_config()
+        self.assertIsNone(cfg.verbosity)
+
+    def test_resolve_log_level_honors_env_override(self) -> None:
+        self.config_service.set_logging_verbosity("quiet")
+        os.environ[self.config_service.VERBOSITY_ENV_VAR] = "verbose"
+        level = self.config_service.resolve_log_level()
+        self.assertEqual(level, self.config_service.logging.DEBUG)
+
+    def test_resolve_log_level_defaults_to_quiet(self) -> None:
+        self.config_service.set_logging_verbosity(None)
+        os.environ.pop(self.config_service.VERBOSITY_ENV_VAR, None)
+        level = self.config_service.resolve_log_level()
+        self.assertEqual(level, self.config_service.logging.WARNING)

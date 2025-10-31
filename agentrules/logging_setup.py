@@ -35,6 +35,19 @@ class HTTPRequestFilter(logging.Filter):
         return False
 
 
+class VendorNoiseFilter(logging.Filter):
+    """Suppress known noisy warnings from third-party SDKs."""
+
+    NOISY_SNIPPETS = (
+        "Warning: there are non-text parts in the response",
+        "Both GOOGLE_API_KEY and GEMINI_API_KEY are set.",
+    )
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        return not any(snippet in message for snippet in self.NOISY_SNIPPETS)
+
+
 def configure_logging(
     *,
     level: int = logging.INFO,
@@ -54,6 +67,12 @@ def configure_logging(
     project_logger = logging.getLogger("project_extractor")
     if not any(isinstance(f, HTTPRequestFilter) for f in project_logger.filters):
         project_logger.addFilter(HTTPRequestFilter())
+    if not any(isinstance(f, VendorNoiseFilter) for f in project_logger.filters):
+        project_logger.addFilter(VendorNoiseFilter())
+
+    root_logger = logging.getLogger()
+    if not any(isinstance(f, VendorNoiseFilter) for f in root_logger.filters):
+        root_logger.addFilter(VendorNoiseFilter())
 
     for name in filtered_loggers or ("openai", "httpx", "httpcore", "anthropic", "google", "genai"):
         logging.getLogger(name).setLevel(logging.WARNING)

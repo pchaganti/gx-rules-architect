@@ -28,14 +28,32 @@ def register(app: typer.Typer) -> None:
             "--models",
             help="Configure model presets instead of API keys.",
         ),
+        logging_only: bool = typer.Option(
+            False,
+            "--logging",
+            help="Configure logging verbosity.",
+        ),
     ) -> None:
         context = bootstrap_runtime()
 
-        if models_only and provider:
-            raise typer.BadParameter("Cannot combine --models with --provider.")
+        option_count = sum(
+            1
+            for flag in (
+                provider is not None,
+                models_only,
+                logging_only,
+            )
+            if flag
+        )
+        if option_count > 1:
+            raise typer.BadParameter("Choose only one of --provider, --models, or --logging.")
 
         if models_only:
             config_wizard.configure_models(context)
+            return
+
+        if logging_only:
+            config_wizard.configure_logging(context)
             return
 
         if provider:

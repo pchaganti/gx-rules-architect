@@ -24,6 +24,7 @@ def run_main_menu(context: CliContext) -> None:
         "Analyze another path": "analyze_other",
         "Configure provider API keys": "configure_keys",
         "Configure models per phase": "configure_models",
+        "Adjust logging verbosity": "configure_logging",
         "Show configured providers": "show_keys",
         "Exit": "exit",
     }
@@ -46,7 +47,7 @@ def run_main_menu(context: CliContext) -> None:
             path_answer = questionary.path("Target project directory:", only_directories=True).ask()
             if not path_answer:
                 continue
-            target = Path(path_answer).expanduser().resolve()
+            target = Path(path_answer.strip()).expanduser().resolve()
             if not target.exists() or not target.is_dir():
                 console.print(f"[red]Invalid directory: {target}[/]")
                 continue
@@ -55,5 +56,7 @@ def run_main_menu(context: CliContext) -> None:
             config_wizard.configure_provider_keys(context)
         elif action == "configure_models":
             config_wizard.configure_models(context)
+        elif action == "configure_logging":
+            config_wizard.configure_logging(context)
         elif action == "show_keys":
             config_wizard.show_provider_summary(context)

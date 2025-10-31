@@ -13,10 +13,12 @@ It defines the agents and methods needed for in-depth analysis of the project's 
 import asyncio
 import logging
 import os
+import time
 from pathlib import Path
 
 from config.prompts.phase_3_prompts import format_phase3_prompt
 from core.agents import get_architect_for_phase
+from core.analysis.events import AnalysisEvent, AnalysisEventSink, NullEventSink
 
 # ====================================================
 # Phase 3 Analysis Class
@@ -36,12 +38,18 @@ class Phase3Analysis:
     # Initialization (__init__)
     # This method sets up the initial state of the Phase3Analysis class.
     # ====================================================
-    def __init__(self):
+    def __init__(self, events: AnalysisEventSink | None = None):
         """
         Initialize the Phase 3 analysis with required components.
         """
         # The actual architects will be created dynamically based on Phase 2 output
         self.architects = []
+        self._events: AnalysisEventSink = events or NullEventSink()
+
+    def set_event_sink(self, events: AnalysisEventSink | None) -> None:
+        """Update the event sink after construction."""
+
+        self._events = events or NullEventSink()
 
     # ====================================================
     # Run Analysis Function
@@ -125,6 +133,12 @@ class Phase3Analysis:
                     responsibilities=agent_def.get("responsibilities", [])
                 )
                 self.architects.append((architect, agent_def))
+                self._publish_agent_event(
+                    "agent_registered",
+                    phase="phase3",
+                    agent=agent_def,
+                    extra={"file_count": files_count},
+                )
 
             # Create analysis tasks for each architect
             analysis_tasks = []
@@ -159,7 +173,7 @@ class Phase3Analysis:
                 context["formatted_prompt"] = formatted_prompt
 
                 # Add the analysis task
-                analysis_tasks.append(architect.analyze(context))
+                analysis_tasks.append(self._execute_agent(architect, agent_def, context))
 
             # Run all analysis tasks in parallel
             results = await asyncio.gather(*analysis_tasks)
@@ -177,6 +191,40 @@ class Phase3Analysis:
                 "phase": "Deep Analysis",
                 "error": str(e)
             }
+
+    async def _execute_agent(self, architect, agent_def: dict, context: dict) -> dict:
+        """Run an individual agent while emitting lifecycle events."""
+
+        files = list(agent_def.get("file_assignments", []) or [])
+
+        self._publish_agent_event(
+            "agent_started",
+            phase="phase3",
+            agent=agent_def,
+            extra={"files": files},
+        )
+
+        started = time.perf_counter()
+        try:
+            result = await architect.analyze(context)
+        except Exception as error:  # pragma: no cover - defensive + passthrough
+            duration = time.perf_counter() - started
+            self._publish_agent_event(
+                "agent_failed",
+                phase="phase3",
+                agent=agent_def,
+                extra={"files": files, "error": str(error), "duration": duration},
+            )
+            raise
+
+        duration = time.perf_counter() - started
+        self._publish_agent_event(
+            "agent_completed",
+            phase="phase3",
+            agent=agent_def,
+            extra={"files": files, "duration": duration},
+        )
+        return result
 
     async def _get_file_contents(self, directory: Path, assigned_files: list[str]) -> dict[str, str]:
         """
@@ -218,3 +266,14 @@ class Phase3Analysis:
                 logging.error(f"Error reading file {file_path}: {str(e)}")
 
         return file_contents
+
+    def _publish_agent_event(self, event_type: str, *, phase: str, agent: dict, extra: dict | None = None) -> None:
+        payload = {
+            "id": agent.get("id") or agent.get("name"),
+            "name": agent.get("name"),
+            "description": agent.get("description"),
+        }
+        if extra:
+            payload.update(extra)
+        event = AnalysisEvent(phase=phase, type=event_type, payload=payload)
+        self._events.publish(event)

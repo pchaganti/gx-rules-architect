@@ -16,6 +16,7 @@ from config.prompts.phase_2_prompts import (  # Prompts for Phase 2
     format_phase2_prompt,
 )
 from core.agents import get_architect_for_phase  # Added import for dynamic model configuration
+from core.analysis.events import AnalysisEvent, AnalysisEventSink, NullEventSink
 from core.utils.parsers.agent_parser import (  # Function to parse agent definitions
     extract_agent_fallback,
     parse_agents_from_phase2,
@@ -44,12 +45,18 @@ class Phase2Analysis:
     # Initialization
     # Sets up the Phase 2 analysis.
     # ====================================================
-    def __init__(self):
+    def __init__(self, events: AnalysisEventSink | None = None):
         """
         Initialize the Phase 2 analysis with the architect from configuration.
         """
         # Use the factory function to get the appropriate architect based on configuration
         self.architect = get_architect_for_phase("phase2")
+        self._events: AnalysisEventSink = events or NullEventSink()
+
+    def set_event_sink(self, events: AnalysisEventSink | None) -> None:
+        """Update the event sink after construction."""
+
+        self._events = events or NullEventSink()
 
     # ====================================================
     # Run Method
@@ -109,6 +116,7 @@ class Phase2Analysis:
                         agent.get("name", "Unknown"),
                         files_count,
                     )
+                self._publish_agent_plan(phase="phase2", agents=agents)
             # If no agents found, try the fallback approach directly
             else:
                 logger.info(
@@ -120,6 +128,7 @@ class Phase2Analysis:
                     if fallback_agents:
                         logger.info(f"[bold green]Success:[/bold green] Fallback found {len(fallback_agents)} agents")
                         agents = fallback_agents
+                        self._publish_agent_plan(phase="phase2", agents=agents)
                     else:
                         logger.warning("[bold yellow]Warning:[/bold yellow] Fallback parsing couldn't find any agents")
                 except Exception as e:
@@ -132,3 +141,21 @@ class Phase2Analysis:
         except Exception as e:
             logger.error(f"[bold red]Error:[/bold red] in Phase 2: {str(e)}")
             return {"error": str(e)}
+
+    def _publish_agent_plan(self, *, phase: str, agents: Sequence[dict]) -> None:
+        """Emit a structured event describing the parsed agent plan."""
+
+        summaries = []
+        for idx, agent in enumerate(agents, start=1):
+            agent_id = agent.get("id") or f"agent_{idx}"
+            summaries.append(
+                {
+                    "id": agent_id,
+                    "name": agent.get("name") or agent_id,
+                    "description": agent.get("description"),
+                    "files": list(agent.get("file_assignments", []) or []),
+                }
+            )
+
+        event = AnalysisEvent(phase=phase, type="agent_plan", payload={"agents": summaries})
+        self._events.publish(event)

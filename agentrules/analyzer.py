@@ -12,11 +12,12 @@ import json
 import logging
 import time
 from collections.abc import Sequence
+from numbers import Real
 from pathlib import Path
 
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from agentrules.cli.ui.analysis_view import AnalysisView
 from config.agents import MODEL_CONFIG
 from core.analysis import (
     FinalAnalysis,
@@ -26,11 +27,121 @@ from core.analysis import (
     Phase4Analysis,
     Phase5Analysis,
 )
+from core.analysis.events import AnalysisEvent, AnalysisEventSink
 from core.utils.file_creation.cursorignore import create_cursorignore
 from core.utils.file_creation.phases_output import save_phase_outputs
 from core.utils.file_system.tree_generator import get_project_tree
 from core.utils.formatters.clean_cursorrules import clean_cursorrules
 from core.utils.model_config_helper import get_model_config_name
+
+
+class _ViewEventSink(AnalysisEventSink):
+    """Translate analysis events into Rich-rendered status updates."""
+
+    PHASE_COLORS = {
+        "phase2": "blue",
+        "phase3": "yellow",
+    }
+
+    def __init__(self, view: AnalysisView):
+        self.view = view
+        self._agents: dict[str, dict] = {}
+
+    def publish(self, event: AnalysisEvent) -> None:
+        if event.phase == "phase2" and event.type == "agent_plan":
+            agents = list(event.payload.get("agents", []))
+            self._cache_agents(agents)
+            self.view.render_agent_plan(agents, color=self.PHASE_COLORS["phase2"])
+            return
+
+        if event.phase not in self.PHASE_COLORS:
+            return
+
+        phase_color = self.PHASE_COLORS[event.phase]
+        payload = dict(event.payload)
+        agent_id = payload.get("id")
+        if agent_id:
+            agent_info = self._agents.setdefault(agent_id, {})
+            agent_info.update(payload)
+        agent_name = self._resolve_agent_name(payload)
+
+        if event.type == "agent_registered":
+            detail = self._format_file_detail(payload.get("files"))
+            message = f"Pending{detail}" if detail else "Pending"
+            self.view.update_agent_progress(
+                event.phase,
+                agent_id or agent_name,
+                agent_name,
+                message,
+                "⏳",
+                phase_color,
+                phase_color,
+            )
+            return
+        if event.type == "agent_started":
+            detail = self._format_file_detail(payload.get("files"))
+            message = f"In progress{detail}"
+            self.view.update_agent_progress(
+                event.phase,
+                agent_id or agent_name,
+                agent_name,
+                message,
+                "⟳",
+                phase_color,
+                phase_color,
+            )
+        elif event.type == "agent_completed":
+            message = "Completed"
+            duration = payload.get("duration")
+            if isinstance(duration, Real):
+                message += f" in {duration:.1f}s"
+            self.view.update_agent_progress(
+                event.phase,
+                agent_id or agent_name,
+                agent_name,
+                message,
+                "✓",
+                phase_color,
+                phase_color,
+            )
+        elif event.type == "agent_failed":
+            error = payload.get("error", "unknown error")
+            duration = payload.get("duration")
+            message = f"Failed: {error}"
+            if isinstance(duration, Real):
+                message += f" after {duration:.1f}s"
+            self.view.update_agent_progress(
+                event.phase,
+                agent_id or agent_name,
+                agent_name,
+                message,
+                "✗",
+                "red",
+                phase_color,
+            )
+
+    def _cache_agents(self, agents: list[dict]) -> None:
+        for entry in agents:
+            agent_id = entry.get("id")
+            if agent_id:
+                self._agents.setdefault(agent_id, {}).update(entry)
+
+    def _resolve_agent_name(self, payload: dict) -> str:
+        if payload.get("name"):
+            return str(payload["name"])
+        if payload.get("id"):
+            return str(payload["id"])
+        return "Agent"
+
+    def _format_file_detail(self, files: object) -> str:
+        if not files:
+            return ""
+        try:
+            count = len(files)  # type: ignore[arg-type]
+        except TypeError:
+            return ""
+        label = "file" if count == 1 else "files"
+        return f" · {count} {label}"
 
 logger = logging.getLogger("project_extractor")
 
@@ -56,6 +167,12 @@ class ProjectAnalyzer:
         self.phase5_analyzer = Phase5Analysis()
         self.final_analyzer = FinalAnalysis()
 
+    def _apply_event_sink(self, sink: AnalysisEventSink | None) -> None:
+        if hasattr(self.phase2_analyzer, "set_event_sink"):
+            self.phase2_analyzer.set_event_sink(sink)
+        if hasattr(self.phase3_analyzer, "set_event_sink"):
+            self.phase3_analyzer.set_event_sink(sink)
+
     async def run_phase1(self, tree: list[str], package_info: dict) -> dict:
         return await self.phase1_analyzer.run(tree, package_info)
 
@@ -79,98 +196,107 @@ class ProjectAnalyzer:
         return await self.final_analyzer.run(consolidated_report, tree)
 
     async def analyze(self) -> str:
-        start_time = time.time()
+        metrics_start_time = time.time()
+        view = AnalysisView(self.console)
+        event_sink = _ViewEventSink(view)
+        self._apply_event_sink(event_sink)
 
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=self.console,
-        ) as progress:
-            self.console.print("\n[bold green]Phase 1: Initial Discovery[/bold green]")
-            self.console.print(
-                "[dim]Running three concurrent agents: Structure Agent, Dependency Agent, and Tech Stack Agent...[/dim]"
-            )
+        tree_with_delimiters = get_project_tree(self.directory)
+        tree_for_analysis = _strip_tree_delimiters(tree_with_delimiters)
 
-            task1 = progress.add_task("[green]Running analysis agents...", total=1)
-            tree_with_delimiters = get_project_tree(self.directory)
-            tree_for_analysis = _strip_tree_delimiters(tree_with_delimiters)
+        package_info: dict = {}
 
-            package_info: dict = {}
-            self.phase1_results = await self.run_phase1(tree_for_analysis, package_info)
+        view.render_phase_header(
+            "Phase 1 · Initial Discovery",
+            "green",
+            "Assessing structure, dependencies, and tech stack",
+        )
+        view.render_agent_overview(
+            (
+                "Structure Agent",
+                "Dependency Agent",
+                "Tech Stack Agent",
+            ),
+            color="green",
+        )
+        self.phase1_results = await view.run_with_spinner(
+            "Running discovery agents...",
+            "green",
+            self.run_phase1(tree_for_analysis, package_info),
+        )
+        view.render_completion("Discovery agents completed", "green")
 
-            progress.update(task1, completed=1)
-            progress.stop_task(task1)
-            progress.remove_task(task1)
-            self.console.print("[green]✓[/green] Phase 1 complete: All three agents have finished their analysis")
+        view.render_phase_header(
+            "Phase 2 · Methodical Planning",
+            "blue",
+            "Designing a targeted analysis plan",
+        )
+        self.phase2_results = await view.run_with_spinner(
+            "Creating analysis plan...",
+            "blue",
+            self.run_phase2(self.phase1_results, tree_for_analysis),
+        )
+        agents = self.phase2_results.get("agents") or []
+        view.render_completion("Analysis plan created", "blue")
 
-            self.console.print("\n[bold blue]Phase 2: Methodical Planning[/bold blue]")
-            self.console.print("[dim]Creating a detailed plan for deeper analysis...[/dim]")
+        view.render_phase_header(
+            "Phase 3 · Deep Analysis",
+            "yellow",
+            "Executing specialized agents across files",
+        )
+        if agents:
+            view.start_agent_progress("phase3", agents, color="yellow")
+        else:
+            view.render_note("Specialized agents running on project files", style="dim")
+        self.phase3_results = await view.run_with_spinner(
+            "Analyzing files in depth...",
+            "yellow",
+            self.run_phase3(self.phase2_results, tree_for_analysis),
+        )
+        view.stop_agent_progress("phase3")
+        view.render_completion("Deep analysis finished", "yellow")
 
-            task2 = progress.add_task("[blue]Creating analysis plan...", total=1)
-            self.phase2_results = await self.run_phase2(self.phase1_results, tree_for_analysis)
+        view.render_phase_header(
+            "Phase 4 · Synthesis",
+            "magenta",
+            "Distilling findings into unified insights",
+        )
+        self.phase4_results = await view.run_with_spinner(
+            "Synthesizing findings...",
+            "magenta",
+            self.run_phase4(self.phase3_results),
+        )
+        view.render_completion("Findings synthesized", "magenta")
 
-            progress.update(task2, completed=1)
-            progress.stop_task(task2)
-            progress.remove_task(task2)
-            self.console.print("[blue]✓[/blue] Phase 2 complete: Analysis plan created")
+        view.render_phase_header(
+            "Phase 5 · Consolidation",
+            "cyan",
+            "Assembling final multi-phase report",
+        )
+        all_results = {
+            "phase1": self.phase1_results,
+            "phase2": self.phase2_results,
+            "phase3": self.phase3_results,
+            "phase4": self.phase4_results,
+        }
+        self.consolidated_report = await view.run_with_spinner(
+            "Consolidating results...",
+            "cyan",
+            self.run_phase5(all_results),
+        )
+        view.render_completion("Results consolidated", "cyan")
 
-            self.console.print("\n[bold yellow]Phase 3: Deep Analysis[/bold yellow]")
-
-            agent_count = len(self.phase2_results.get("agents", []))
-            if agent_count > 0:
-                self.console.print(
-                    f"[dim]Running {agent_count} specialized analysis agents on their "
-                    "assigned files...[/dim]"
-                )
-            else:
-                self.console.print("[dim]Running specialized analysis on project files...[/dim]")
-
-            task3 = progress.add_task("[yellow]Analyzing files in depth...", total=1)
-            self.phase3_results = await self.run_phase3(self.phase2_results, tree_for_analysis)
-
-            progress.update(task3, completed=1)
-            progress.stop_task(task3)
-            progress.remove_task(task3)
-            self.console.print("[yellow]✓[/yellow] Phase 3 complete: In-depth analysis finished")
-
-            self.console.print("\n[bold magenta]Phase 4: Synthesis[/bold magenta]")
-            self.console.print("[dim]Synthesizing findings from all previous analyses...[/dim]")
-
-            task4 = progress.add_task("[magenta]Synthesizing findings...", total=1)
-            self.phase4_results = await self.run_phase4(self.phase3_results)
-
-            progress.update(task4, completed=1)
-            progress.stop_task(task4)
-            progress.remove_task(task4)
-            self.console.print("[magenta]✓[/magenta] Phase 4 complete: Findings synthesized")
-
-            self.console.print("\n[bold cyan]Phase 5: Consolidation[/bold cyan]")
-            self.console.print("[dim]Consolidating all results into a comprehensive report...[/dim]")
-
-            task5 = progress.add_task("[cyan]Consolidating results...", total=1)
-            all_results = {
-                "phase1": self.phase1_results,
-                "phase2": self.phase2_results,
-                "phase3": self.phase3_results,
-                "phase4": self.phase4_results,
-            }
-            self.consolidated_report = await self.run_phase5(all_results)
-
-            progress.update(task5, completed=1)
-            progress.stop_task(task5)
-            progress.remove_task(task5)
-            self.console.print("[cyan]✓[/cyan] Phase 5 complete: Results consolidated")
-
-            self.console.print("\n[bold white]Final Analysis[/bold white]")
-            self.console.print("[dim]Creating final analysis for Cursor IDE...[/dim]")
-
-            task6 = progress.add_task("[white]Creating rules...", total=1)
-            self.final_analysis = await self.run_final_analysis(self.consolidated_report, tree_for_analysis)
-
-            progress.update(task6, completed=1)
-            progress.stop_task(task6)
-            progress.remove_task(task6)
-            self.console.print("[white]✓[/white] Final Analysis complete: Cursor rules created")
+        view.render_phase_header(
+            "Final Analysis",
+            "white",
+            "Preparing Cursor rules output",
+        )
+        self.final_analysis = await view.run_with_spinner(
+            "Creating rules...",
+            "white",
+            self.run_final_analysis(self.consolidated_report, tree_for_analysis),
+        )
+        view.render_completion("Cursor rules ready", "white")
 
         analysis_lines: list[str] = [
             f"Project Analysis Report for: {self.directory}",
@@ -186,6 +312,8 @@ class ProjectAnalyzer:
         phase4_model = get_model_config_name(MODEL_CONFIG["phase4"])
         phase5_model = get_model_config_name(MODEL_CONFIG["phase5"])
         final_model = get_model_config_name(MODEL_CONFIG["final"])
+
+        total_seconds = time.time() - metrics_start_time
 
         analysis_lines.extend(
             [
@@ -215,7 +343,7 @@ class ProjectAnalyzer:
                 "\n",
                 "Analysis Metrics",
                 "-" * 30,
-                f"Time taken: {time.time() - start_time:.2f} seconds",
+                f"Time taken: {total_seconds:.2f} seconds",
             ]
         )
 

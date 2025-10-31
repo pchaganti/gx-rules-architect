@@ -7,6 +7,7 @@ platform equivalent) so the interactive CLI can persist settings between runs.
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,6 +31,13 @@ PROVIDER_ENV_MAP = {
     "tavily": "TAVILY_API_KEY",
 }
 
+VERBOSITY_ENV_VAR = "AGENTRULES_LOG_LEVEL"
+VERBOSITY_PRESETS = {
+    "quiet": logging.WARNING,
+    "standard": logging.INFO,
+    "verbose": logging.DEBUG,
+}
+
 
 @dataclass
 class ProviderConfig:
@@ -40,6 +48,7 @@ class ProviderConfig:
 class CLIConfig:
     providers: dict[str, ProviderConfig] = field(default_factory=dict)
     models: dict[str, str] = field(default_factory=dict)
+    verbosity: str | None = None
 
     @classmethod
     def from_dict(cls, payload: dict) -> CLIConfig:
@@ -52,7 +61,10 @@ class CLIConfig:
             for phase, preset in payload.get("models", {}).items()
             if isinstance(phase, str) and isinstance(preset, str)
         }
-        return cls(providers=providers, models=models)
+        verbosity = payload.get("verbosity")
+        if verbosity is not None and not isinstance(verbosity, str):
+            verbosity = None
+        return cls(providers=providers, models=models, verbosity=verbosity)
 
     def to_dict(self) -> dict:
         payload: dict[str, object] = {
@@ -64,6 +76,8 @@ class CLIConfig:
         }
         if self.models:
             payload["models"] = dict(self.models)
+        if self.verbosity:
+            payload["verbosity"] = self.verbosity
         return payload
 
 
@@ -98,6 +112,49 @@ def set_phase_model(phase: str, preset_key: str | None) -> CLIConfig:
         config.models.pop(phase, None)
     save_config(config)
     return config
+
+
+def set_logging_verbosity(verbosity: str | None) -> CLIConfig:
+    config = load_config()
+    config.verbosity = _normalize_verbosity_label(verbosity) or None
+    save_config(config)
+    return config
+
+
+def get_logging_verbosity() -> str | None:
+    config = load_config()
+    return config.verbosity
+
+
+def _normalize_verbosity_label(label: str | None) -> str | None:
+    if not label:
+        return None
+    normalized = label.strip().lower()
+    if normalized in VERBOSITY_PRESETS:
+        return normalized
+    if normalized in {"warn", "warning"}:
+        return "quiet"
+    if normalized in {"info", "default", "standard"}:
+        return "standard"
+    if normalized in {"debug", "verbose"}:
+        return "verbose"
+    return None
+
+
+def resolve_log_level(default: int | None = None) -> int:
+    env_value = os.getenv(VERBOSITY_ENV_VAR)
+    label = _normalize_verbosity_label(env_value)
+    if label is None:
+        label = _normalize_verbosity_label(get_logging_verbosity())
+
+    if label is None:
+        return VERBOSITY_PRESETS["quiet"] if default is None else default
+
+    level = VERBOSITY_PRESETS.get(label)
+    if level is not None:
+        return level
+
+    return VERBOSITY_PRESETS["quiet"] if default is None else default
 
 
 def apply_config_to_environment(config: CLIConfig | None = None) -> None:

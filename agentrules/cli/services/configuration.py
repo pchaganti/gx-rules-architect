@@ -9,6 +9,8 @@ from agentrules import model_config
 from agentrules.config_service import (
     PROVIDER_ENV_MAP,
     get_current_provider_keys,
+    get_logging_verbosity,
+    set_logging_verbosity,
     set_phase_model,
     set_provider_key,
 )
@@ -57,3 +59,11 @@ def save_phase_model(phase: str, preset_key: str | None) -> None:
 
 def apply_model_overrides(overrides: Mapping[str, str] | None = None) -> dict[str, str]:
     return model_config.apply_user_overrides(overrides)
+
+
+def get_logging_preference() -> str | None:
+    return get_logging_verbosity()
+
+
+def save_logging_preference(value: str | None) -> None:
+    set_logging_verbosity(value)
