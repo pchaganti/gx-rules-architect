@@ -80,7 +80,8 @@ exclude = [
   "build",
   "dist",
   ".venv",
-  ".venv_agentrules",
+  "venv_agentrules",
+  "venv_agentrules_legacy",
   ".mypy_cache",
   ".pytest_cache",
 ]
@@ -90,4 +91,4 @@ reportMissingImports = "error"
 reportMissingTypeStubs = "warning"
 disableBytesTypePromotions = true
 venvPath = "."
-venv = ".venv_agentrules"
+venv = "venv_agentrules"

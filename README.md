@@ -141,17 +141,27 @@ You’ll get a prompt for each phase with the presets that match the API keys yo
 
 ### Optional: Quick Smoke Test in a Fresh Virtualenv
 
-To verify that packaging metadata and dependencies stay in sync, spin up an isolated environment and run a basic CLI command:
+To verify that packaging metadata and dependencies stay in sync, spin up an isolated environment and run a basic CLI command. Use a non-hidden directory (no leading dot) so macOS doesn’t mark the install hook files as hidden, which would prevent editable installs from loading:
 
 ```bash
-python -m venv .venv_agentrules
-. .venv_agentrules/bin/activate
+python -m venv venv_agentrules
+. venv_agentrules/bin/activate
 pip install --upgrade pip
 pip install .
 agentrules --version
 ```
 
 On macOS you may see the `LibreSSL` warning the first time you run this command with older builds of the package; the current release suppresses it automatically. Feel free to adapt this snippet for CI to catch packaging regressions early.
+
+### Bootstrap Script
+
+For day-to-day setup you can run the automated helper:
+
+```bash
+./scripts/bootstrap_env.sh
+```
+
+Override the interpreter with `PYTHON_BIN=/custom/python` if needed, and pass `--skip-checks` to defer Ruff/Pyright until later.
 
 ### 🧹 Linting & Type Checking
 
