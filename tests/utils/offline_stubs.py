@@ -149,3 +149,22 @@ def patch_factory_offline() -> None:
         factory_pkg.get_architect_for_phase = get_architect_for_phase_stub  # type: ignore
     except Exception:
         pass
+
+    # Update any already-imported analysis modules so their cached function references point to the stubs
+    import sys
+
+    for module_name in (
+        "core.analysis.phase_1",
+        "core.analysis.phase_2",
+        "core.analysis.phase_3",
+        "core.analysis.phase_4",
+        "core.analysis.phase_5",
+        "core.analysis.final_analysis",
+    ):
+        module = sys.modules.get(module_name)
+        if not module:
+            continue
+        if hasattr(module, "get_architect_for_phase"):
+            setattr(module, "get_architect_for_phase", get_architect_for_phase_stub)
+        if module_name == "core.analysis.phase_1" and hasattr(module, "get_researcher_architect"):
+            setattr(module, "get_researcher_architect", get_researcher_architect_stub)

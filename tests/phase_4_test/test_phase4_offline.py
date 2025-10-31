@@ -1,5 +1,5 @@
 import unittest
-from ..utils.offline_stubs import patch_factory_offline
+from tests.utils.offline_stubs import patch_factory_offline
 
 
 class Phase4OfflineTests(unittest.IsolatedAsyncioTestCase):

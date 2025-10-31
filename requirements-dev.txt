@@ -1,0 +1,6 @@
+# Development dependencies for running the full test suite.
+-r requirements.txt
+
+pytest
+pytest-asyncio
+pytest-mock

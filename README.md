@@ -45,10 +45,11 @@ CursorRules Architect V2 is an advanced multi-agent system that analyzes your co
   - `anthropic` for Anthropic API access
   - `openai` for OpenAI API access
   - `google-genai` (Google GenAI SDK) for Google Gemini API access
-  - `rich` for beautiful terminal output
-  - `click` for CLI interface
-  - `pathlib` for path manipulation
-  - `asyncio` for async operations
+  - `protobuf` to satisfy Google SDK imports
+  - `rich` & `typer` for the terminal experience
+  - `questionary` for interactive prompts
+- Dev/test tooling:
+  - `pytest`, `pytest-asyncio`, `pytest-mock`
 
 ## 📦 Installation
 
@@ -61,6 +62,15 @@ CursorRules Architect V2 is an advanced multi-agent system that analyzes your co
 2. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
+   ```
+
+   For local development or running the full automated test suite, install the
+   optional extras:
+
+   ```bash
+   pip install -e .[dev]
+   # or
+   pip install -r requirements-dev.txt
    ```
 
 3. **Set Up API Keys**

@@ -25,6 +25,7 @@ dependencies = [
   "rich",
   "openai",
   "google-genai",
+  "protobuf>=4.25",
   "python-dotenv",
   "tavily-python",
   "typer>=0.12",
@@ -35,7 +36,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio"]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+  "pytest-mock",
+]
 
 [project.scripts]
 agentrules = "agentrules.cli:app"

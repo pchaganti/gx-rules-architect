@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from importlib import reload
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
 
@@ -34,11 +34,11 @@ class CLITestCase(unittest.TestCase):
 
         runner = CliRunner()
 
-        with patch.object(cli, "ProjectAnalyzer") as mock_analyzer_cls:
-            mock_instance = mock_analyzer_cls.return_value
-            mock_instance.analyze = AsyncMock(return_value="ok")
-            mock_instance.persist_outputs.return_value = None
-
+        with patch("agentrules.cli.commands.analyze.bootstrap_runtime") as mock_bootstrap, patch(
+            "agentrules.cli.commands.analyze.run_pipeline"
+        ) as mock_run_pipeline:
+            context = MagicMock()
+            mock_bootstrap.return_value = context
             result = runner.invoke(
                 cli.app,
                 ["analyze", str(Path.cwd()), "--offline"],
@@ -46,6 +46,9 @@ class CLITestCase(unittest.TestCase):
             )
 
         self.assertEqual(result.exit_code, 0, msg=result.output)
-        mock_analyzer_cls.assert_called_once()
-        mock_instance.analyze.assert_awaited()
-        mock_instance.persist_outputs.assert_called_once()
+        mock_bootstrap.assert_called_once()
+        mock_run_pipeline.assert_called_once()
+        call_args = mock_run_pipeline.call_args[0]
+        self.assertEqual(call_args[0], Path.cwd())
+        self.assertTrue(call_args[1])
+        self.assertIs(call_args[2], context)

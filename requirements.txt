@@ -2,6 +2,7 @@ anthropic
 rich
 openai
 google-genai
+protobuf>=4.25
 python-dotenv
 tavily-python
 typer

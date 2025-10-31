@@ -1,7 +1,8 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `main.py`: CLI entrypoint (Click). Analyzes a target project path.
+- `main.py`: Typer entrypoint that forwards to the `agentrules` CLI app.
+- `agentrules/cli/`: Modular Typer CLI package with command handlers, Questionary UI flows, and shared services.
 - `core/agents/`: Provider adapters built on `BaseArchitect`.
 - `core/analysis/`: Phase runners (`phase_1.py` … `final_analysis.py`).
 - `core/utils/`: IO, formatting, file system helpers.
@@ -11,11 +12,19 @@
 
 ## Build, Test, and Development Commands
 - Create env: `python -m venv .venv && source .venv/bin/activate`
-- Install deps: `pip install -r requirements.txt`
-- Run analysis: `python main.py -p /path/to/target-project`
+- Install deps (editing locally): `pip install -e .[dev]`
+- Run interactive CLI: `agentrules`
+- Run analysis directly: `agentrules analyze /path/to/target-project`
 - Run all tests: `python -m unittest discover tests -v`
 - Run a phase test: `python tests/phase_2_test/run_test.py`
 - Env check: `python tests/test_env.py` (verifies API keys and `.env`)
+
+## CLI Overview
+- **Entry command**: Installing in editable mode registers the `agentrules` executable. Running it without arguments opens an interactive menu covering analysis, key configuration, and per-phase model overrides.
+- **Interactive configuration**: The "Configure provider API keys" flow lets you pick a provider, enter a key, and persists it to `~/.config/agentrules/config.toml` (or `AGENTRULES_CONFIG_DIR`). Keys are mirrored into environment variables for subsequent runs.
+- **Model presets**: "Configure models per phase" presents each phase (with Phase 1 broken into General vs. Researcher agents). Selecting a phase first chooses a base model, then—when multiple variants exist—prompts for effort/temperature settings. Selections are persisted in the same TOML file and applied at startup via `agentrules/model_config.py`.
+- **Offline mode**: `agentrules analyze --offline …` (or `OFFLINE=1`) swaps in deterministic dummy architects and mocked Tavily calls for local smoke tests without provider traffic.
+- **Outputs**: Successful runs write `.cursorrules`, `.cursorignore`, and phase-specific markdown files under `<target>/phases_output`, while logging progress via Rich spinners.
 
 ## Coding Style & Naming Conventions
 - PEP 8, 4-space indentation, explicit type hints.
