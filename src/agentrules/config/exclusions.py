@@ -18,7 +18,9 @@ EXCLUDED_DIRS = {
     'node_modules', '.next', '.git', 'venv', '__pycache__', '_pycache_',
     'dist', 'build', '.vscode', '.idea', 'coverage',
     '.pytest_cache', '.mypy_cache', '.ruff_cache', '.tox',
-    'env', '.env', '.venv', 'site-packages'
+    'env', '.env', '.venv', 'site-packages', '.egg-info',
+    '.gradle', '.parcel-cache', 'buck-out', 'out', 'tmp', 'temp',
+    'artifacts', 'target'
 }
 
 EXCLUDED_FILES = {
@@ -27,7 +29,7 @@ EXCLUDED_FILES = {
     'README.md', 'LICENSE', '.eslintrc', '.prettierrc',
     'tsconfig.json', 'requirements.txt', 'poetry.lock',
     'Pipfile.lock', '.gitattributes', '.gitconfig', '.gitmodules',
-    '.coverage',
+    '.coverage', '.cursorignore', '*.egg-info',
 }
 
 EXCLUDED_EXTENSIONS = {
@@ -35,5 +37,5 @@ EXCLUDED_EXTENSIONS = {
     '.svg', '.mp4', '.mp3', '.pdf', '.zip',
     '.woff', '.woff2', '.ttf', '.eot',
     '.pyc', '.pyo', '.pyd', '.so', '.pkl', '.pickle',
-    '.db', '.sqlite', '.log', '.cache'
+    '.db', '.sqlite', '.log', '.cache', '.ini'
 }

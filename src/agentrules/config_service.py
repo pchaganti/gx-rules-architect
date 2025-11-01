@@ -419,7 +419,7 @@ def should_respect_gitignore(default: bool = True) -> bool:
     return bool(config.exclusions.respect_gitignore)
 
 
-def get_tree_max_depth(default: int = 4) -> int:
+def get_tree_max_depth(default: int = 5) -> int:
     config = load_config()
     overrides = config.exclusions
     depth = overrides.tree_max_depth

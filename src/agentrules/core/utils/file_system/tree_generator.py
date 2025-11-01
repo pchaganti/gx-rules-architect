@@ -167,7 +167,7 @@ def generate_tree(
     prefix: str = "",
     exclude_dirs: set[str] | None = None,
     exclude_patterns: set[str] | None = None,
-    max_depth: int = 4,
+    max_depth: int = 5,
     current_depth: int = 0,
     *,
     gitignore_spec: PathSpec | None = None,
@@ -343,7 +343,7 @@ def save_tree_to_file(tree_content: list[str], path: Path, *, rules_filename: st
 
 def get_project_tree(
     directory: Path,
-    max_depth: int = 4,
+    max_depth: int = 5,
     *,
     exclude_dirs: set[str] | None = None,
     exclude_files: set[str] | None = None,

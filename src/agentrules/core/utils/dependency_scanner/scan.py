@@ -20,7 +20,7 @@ def collect_dependency_info(
     directory: Path,
     *,
     gitignore_spec: PathSpec | None = None,
-    max_depth: int = 4,
+    max_depth: int = 5,
     registry: ManifestParserRegistry | None = None,
 ) -> dict[str, Any]:
     """Collect dependency manifest data from the target directory."""

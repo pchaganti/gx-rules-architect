@@ -100,7 +100,7 @@ class ConfigServiceTestCase(unittest.TestCase):
         self.assertTrue(self.config_service.is_researcher_enabled())
 
     def test_tree_depth_defaults_set_and_reset(self) -> None:
-        self.assertEqual(self.config_service.get_tree_max_depth(), 4)
+        self.assertEqual(self.config_service.get_tree_max_depth(), 5)
 
         self.config_service.set_tree_max_depth(7)
         self.assertEqual(self.config_service.get_tree_max_depth(), 7)
@@ -109,6 +109,6 @@ class ConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(cfg.exclusions.tree_max_depth, 7)
 
         self.config_service.reset_tree_max_depth()
-        self.assertEqual(self.config_service.get_tree_max_depth(), 4)
+        self.assertEqual(self.config_service.get_tree_max_depth(), 5)
         cfg = self.config_service.load_config()
         self.assertIsNone(cfg.exclusions.tree_max_depth)
