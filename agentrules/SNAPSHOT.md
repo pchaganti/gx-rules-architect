@@ -18,7 +18,20 @@
 │   └── ui/                    # Modules for user interaction and terminal rendering.
 │       ├── __init__.py        # Package initializer for the UI module.
 │       ├── analysis_view.py   # Renders real-time analysis progress using the Rich library.
-│       ├── config_wizard.py   # Interactive prompts for configuring API keys and models.
+│       ├── settings/            # Interactive settings flows (providers, models, exclusions).
+│       │   ├── __init__.py      # Public entry points for settings menus.
+│       │   ├── menu.py          # Top-level settings navigation.
+│       │   ├── providers.py     # Provider API key summary and editor.
+│       │   ├── logging.py       # Logging verbosity configuration.
+│       │   ├── outputs.py       # Output preferences configuration.
+│       │   ├── exclusions/      # Exclusion summary rendering and editing helpers.
+│       │   │   ├── __init__.py
+│       │   │   ├── editor.py
+│       │   │   └── summary.py
+│       │   └── models/          # Model preset selection flows.
+│       │       ├── __init__.py
+│       │       ├── researcher.py
+│       │       └── utils.py
 │       └── main_menu.py       # Implements the interactive main menu for the CLI.
 ├── config_service.py          # Manages loading and saving of user configuration from a TOML file.
 ├── logging_setup.py           # Configures application-wide logging using Rich.

@@ -5,7 +5,7 @@ from __future__ import annotations
 import typer
 
 from ..bootstrap import bootstrap_runtime
-from ..ui import config_wizard
+from ..ui.settings import show_provider_summary
 
 
 def register(app: typer.Typer) -> None:
@@ -14,4 +14,4 @@ def register(app: typer.Typer) -> None:
     @app.command("keys")
     def show_keys() -> None:  # type: ignore[func-returns-value]
         context = bootstrap_runtime()
-        config_wizard.show_provider_summary(context)
+        show_provider_summary(context)

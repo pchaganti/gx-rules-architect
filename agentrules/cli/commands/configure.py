@@ -9,7 +9,12 @@ from agentrules.config_service import PROVIDER_ENV_MAP
 
 from ..bootstrap import bootstrap_runtime
 from ..services import configuration as config_service
-from ..ui import config_wizard
+from ..ui.settings import (
+    configure_logging,
+    configure_models,
+    configure_output_preferences,
+    configure_settings,
+)
 
 
 def register(app: typer.Typer) -> None:
@@ -55,15 +60,15 @@ def register(app: typer.Typer) -> None:
             raise typer.BadParameter("Choose only one of --provider, --models, --logging, or --outputs.")
 
         if models_only:
-            config_wizard.configure_models(context)
+            configure_models(context)
             return
 
         if logging_only:
-            config_wizard.configure_logging(context)
+            configure_logging(context)
             return
 
         if outputs_only:
-            config_wizard.configure_output_preferences(context)
+            configure_output_preferences(context)
             return
 
         if provider:
@@ -82,4 +87,4 @@ def register(app: typer.Typer) -> None:
             context.console.print(f"[green]{provider.title()} key updated.[/]")
             return
 
-        config_wizard.configure_settings(context)
+        configure_settings(context)

@@ -9,7 +9,7 @@ import questionary
 
 from ..context import CliContext
 from ..services.pipeline_runner import run_pipeline
-from . import config_wizard
+from .settings import configure_settings
 from .styles import CLI_STYLE, navigation_choice
 
 
@@ -71,4 +71,4 @@ def run_main_menu(context: CliContext) -> None:
                 continue
             run_pipeline(target, offline=False, context=context)
         elif action == "settings":
-            config_wizard.configure_settings(context)
+            configure_settings(context)
