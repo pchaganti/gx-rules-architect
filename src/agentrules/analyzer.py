@@ -332,14 +332,14 @@ class ProjectAnalyzer:
         view.render_phase_header(
             "Final Analysis",
             "white",
-            "Preparing Cursor rules output",
+            "Preparing Agent rules output",
         )
         self.final_analysis = await view.run_with_spinner(
             "Creating rules...",
             "white",
             self.run_final_analysis(self.consolidated_report, tree_for_analysis),
         )
-        view.render_completion("Cursor rules ready", "white")
+        view.render_completion("Agent rules ready", "white")
 
         analysis_lines: list[str] = [
             f"Project Analysis Report for: {self.directory}",
@@ -457,7 +457,7 @@ class ProjectAnalyzer:
 
         success, message = clean_cursorrules(str(self.directory), filename=rules_filename)
         if success:
-            self.console.print("[green]Cleaned cursor rules file: removed text before 'You are...'[/]")
+            self.console.print("[green]Cleaned Agent rules file: removed text before 'You are...'[/]")
         else:
             self.console.print(f"[yellow]{message}[/]")
 
@@ -466,7 +466,7 @@ class ProjectAnalyzer:
                 f"[green]Individual phase outputs saved to:[/] {self.directory}/phases_output/"
             )
         self.console.print(
-            f"[green]Cursor rules created at:[/] {self.directory}/{rules_filename}"
+            f"[green]Agent rules created at:[/] {self.directory}/{rules_filename}"
         )
         self.console.print(
             f"[green]Cursor ignore created at:[/] {self.directory}/.cursorignore"

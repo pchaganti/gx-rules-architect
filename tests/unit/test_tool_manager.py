@@ -1,4 +1,8 @@
 
+from typing import Any
+
+from google.genai import types as genai_types
+
 from agentrules.core.agent_tools.tool_manager import ToolManager
 from agentrules.core.agents.base import ModelProvider
 from agentrules.core.types.tool_config import Tool
@@ -53,16 +57,21 @@ def test_get_provider_tools_gemini_conversion():
     converted = ToolManager.get_provider_tools(tools, ModelProvider.GEMINI)
     assert isinstance(converted, list) and len(converted) == 1
     tool = converted[0]
-    assert "function_declarations" in tool
-    fns = tool["function_declarations"]
-    assert isinstance(fns, list) and len(fns) == 1
-    fn = fns[0]
-    assert fn["name"] == "tavily_web_search"
-    assert fn["parameters"]["type"] == "object"
+    tool_cls: Any = getattr(genai_types, "Tool")
+    fn_decl_cls: Any = getattr(genai_types, "FunctionDeclaration")
+    assert isinstance(tool, tool_cls)
+    function_decls = getattr(tool, "function_declarations")
+    assert function_decls is not None
+    assert len(function_decls) == 1
+    fn_decl = function_decls[0]
+    assert isinstance(fn_decl, fn_decl_cls)
+    assert getattr(fn_decl, "name") == "tavily_web_search"
+    params_schema = getattr(fn_decl, "parameters_json_schema")
+    assert params_schema["type"] == "object"
 
 
 def test_get_provider_tools_deepseek_returns_empty():
     tools = [_sample_tool()]
     converted = ToolManager.get_provider_tools(tools, ModelProvider.DEEPSEEK)
-    # DeepSeek path returns empty (no tool support in manager)
-    assert converted == []
+    # DeepSeek shares OpenAI schema, so the tool is passed through unchanged.
+    assert converted == tools

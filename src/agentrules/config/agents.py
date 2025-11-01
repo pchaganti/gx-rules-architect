@@ -20,6 +20,7 @@ from agentrules.core.types.models import (
     DEEPSEEK_CHAT,
     DEEPSEEK_REASONER,
     GEMINI_FLASH,
+    GEMINI_FLASH_DYNAMIC,
     GEMINI_PRO,
     GPT4_1_CREATIVE,
     GPT4_1_DEFAULT,
@@ -76,10 +77,16 @@ MODEL_PRESETS: dict[str, PresetDefinition] = {
         description="Fast, low-cost summarization and planning.",
         provider=ModelProvider.GEMINI,
     ),
+    "gemini-flash-thinking": _preset(
+        config=GEMINI_FLASH_DYNAMIC,
+        label="Gemini 2.5 Flash (Thinking)",
+        description="Flash with dynamic thinking enabled (auto thinking budget).",
+        provider=ModelProvider.GEMINI,
+    ),
     "gemini-pro": _preset(
         config=GEMINI_PRO,
         label="Gemini 2.5 Pro",
-        description="Stronger reasoning with higher latency and cost.",
+        description="Gemini Pro with dynamic thinking (auto thinking budget).",
         provider=ModelProvider.GEMINI,
     ),
     "claude-sonnet": _preset(

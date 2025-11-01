@@ -3,7 +3,7 @@
 tests/final_analysis_test/run_test.py
 
 This script tests the Final Analysis functionality by using the Phase 5
-output as input and generating final cursor rules.
+output as input and generating final agent rules.
 """
 
 import asyncio
@@ -22,7 +22,7 @@ from tests.utils.offline_stubs import patch_factory_offline
 
 async def run_final_analysis_test():
     """
-    Run Final Analysis using the Phase 5 results and generate cursor rules.
+    Run Final Analysis using the Phase 5 results and generate agent rules.
     """
     # Path to the output directory
     output_dir = Path(__file__).parent / "output"
@@ -61,8 +61,8 @@ async def run_final_analysis_test():
 
     # Also save just the analysis text if available
     if "analysis" in results:
-        rules_file = output_dir / "cursor_rules.md"
-        print(f"Saving cursor rules to: {rules_file}")
+        rules_file = output_dir / "agent_rules.md"
+        print(f"Saving agent rules to: {rules_file}")
         with open(rules_file, "w") as f:
             f.write(results["analysis"])
 
@@ -73,6 +73,6 @@ if __name__ == "__main__":
     results = asyncio.run(run_final_analysis_test())
     print("\nFinal Analysis Results Summary:")
     if "analysis" in results:
-        print(f"Cursor rules length: {len(results['analysis'])} characters")
+        print(f"Agent rules length: {len(results['analysis'])} characters")
     else:
         print(f"Response keys: {list(results.keys())}")

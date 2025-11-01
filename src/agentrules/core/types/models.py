@@ -218,10 +218,17 @@ GEMINI_FLASH = ModelConfig(
     tools_config={"enabled": False, "tools": None}
 )
 
+GEMINI_FLASH_DYNAMIC = ModelConfig(
+    provider=ModelProvider.GEMINI,
+    model_name="gemini-2.5-flash",
+    reasoning=ReasoningMode.DYNAMIC,
+    tools_config={"enabled": False, "tools": None}
+)
+
 GEMINI_PRO = ModelConfig(
     provider=ModelProvider.GEMINI,
     model_name="gemini-2.5-pro",
-    reasoning=ReasoningMode.ENABLED,
+    reasoning=ReasoningMode.DYNAMIC,
     tools_config={"enabled": False, "tools": None}
 )
 

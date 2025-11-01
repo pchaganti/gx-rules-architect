@@ -16,7 +16,7 @@ def build_app() -> typer.Typer:
 
     app = typer.Typer(
         name="agentrules",
-        help="Analyze a project and generate Cursor rules using multi-provider AI agents.",
+        help="Analyze a project and generate Agent rules using multi-provider AI agents.",
         invoke_without_command=True,
         add_completion=False,
     )

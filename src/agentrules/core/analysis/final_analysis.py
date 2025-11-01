@@ -75,7 +75,7 @@ class FinalAnalysis:
             # Format the prompt using the template from the prompts file.
             prompt = format_final_analysis_prompt(consolidated_report, project_structure)
 
-            logger.info("[bold]Final Analysis:[/bold] Creating Cursor rules from consolidated report")
+            logger.info("[bold]Final Analysis:[/bold] Creating Agent rules from consolidated report")
 
             # Resolve architect at call time to allow test monkeypatches
             if self.architect is None:

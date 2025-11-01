@@ -5,7 +5,7 @@ Central manager for tool definitions and provider-specific conversions.
 """
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
 from agentrules.core.agents.base import ModelProvider
 from agentrules.core.types.tool_config import Tool
@@ -56,22 +56,57 @@ class ToolManager:
             ]
 
         elif provider == ModelProvider.GEMINI:
-            # Convert to Google GenAI SDK Tool format (google-genai)
-            # The new SDK accepts pydantic types or plain dicts via config parsing.
-            # We return list of dict tools using function_declarations with JSON schema parameters.
+            # Convert to Google GenAI SDK Tool objects.
+            try:
+                from google.genai import types as genai_types  # type: ignore
+            except Exception:  # pragma: no cover - fallback when SDK unavailable
+                converted = []
+                for tool in normalized:
+                    fn = tool.get("function", {})
+                    converted.append(
+                        {
+                            "function_declarations": [
+                                {
+                                    "name": fn.get("name"),
+                                    "description": fn.get("description", ""),
+                                    "parameters": fn.get("parameters", {"type": "object", "properties": {}}),
+                                }
+                            ]
+                        }
+                    )
+                return converted
+
+            function_declaration_cls = cast(
+                Any, getattr(genai_types, "FunctionDeclaration", None)
+            )
+            tool_cls = cast(Any, getattr(genai_types, "Tool", None))
+            if function_declaration_cls is None or tool_cls is None:
+                # Fallback to plain dicts if the SDK structure is unavailable (unlikely).
+                converted = []
+                for tool in normalized:
+                    fn = tool.get("function", {})
+                    converted.append(
+                        {
+                            "function_declarations": [
+                                {
+                                    "name": fn.get("name"),
+                                    "description": fn.get("description", ""),
+                                    "parameters": fn.get("parameters", {"type": "object", "properties": {}}),
+                                }
+                            ]
+                        }
+                    )
+                return converted
+
             converted = []
             for tool in normalized:
                 fn = tool.get("function", {})
-                converted.append({
-                    "function_declarations": [
-                        {
-                            "name": fn.get("name"),
-                            "description": fn.get("description", ""),
-                            # Pass JSON Schema directly; SDK will parse into types.Schema
-                            "parameters": fn.get("parameters", {"type": "object", "properties": {}}),
-                        }
-                    ]
-                })
+                fn_decl = function_declaration_cls(
+                    name=fn.get("name"),
+                    description=fn.get("description", ""),
+                    parameters_json_schema=fn.get("parameters", {"type": "object", "properties": {}}),
+                )
+                converted.append(tool_cls(function_declarations=[fn_decl]))
             return converted
 
         elif provider in {ModelProvider.DEEPSEEK, ModelProvider.XAI}:

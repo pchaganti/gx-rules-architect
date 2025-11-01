@@ -5,7 +5,7 @@ core/utils/formatters/clean_cursorrules.py
 This module provides functionality for cleaning the generated rules file by
 removing any text before the first occurrence of "You are...".
 
-This ensures that cursor rules files start with the proper system prompt format.
+This ensures that agent rules files start with the proper system prompt format.
 """
 
 # ====================================================

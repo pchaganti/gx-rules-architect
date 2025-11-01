@@ -76,7 +76,7 @@ class DummyArchitect(BaseArchitect):
         return {"analysis": "Offline synthesis of agent findings"}
 
     async def final_analysis(self, consolidated_report: dict, prompt: str | None = None) -> dict:
-        return {"analysis": "You are an offline final analysis assistant. Provide concise Cursor rules."}
+        return {"analysis": "You are an offline final analysis assistant. Provide concise Agent rules."}
 
     async def consolidate_results(self, all_results: dict, prompt: str | None = None) -> dict:
         return {"phase": "Consolidation", "report": "Offline consolidated report"}

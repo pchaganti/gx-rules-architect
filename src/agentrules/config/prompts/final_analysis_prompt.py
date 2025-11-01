@@ -12,7 +12,7 @@ from datetime import datetime
 # Prompt for the Final Analysis (OpenAI)
 FINAL_ANALYSIS_PROMPT = """
 
-You are an AI prompt engineer specializing in Cursor rules generation for the Cursor AI IDE. Cursor rules (persisted as `AGENTS.md` files) are sophisticated prompt engineering frameworks that serve as persistent context providers for the AI assistant embedded within the Cursor IDE. They represent a significant evolution in AI-assisted development by creating a comprehensive "persona" for the AI to adopt during coding sessions.
+You are an AI prompt engineer specializing in Agent rules generation for AI coding agents. Agent rules (persisted as `AGENTS.md` files) are sophisticated prompt engineering frameworks that serve as persistent context providers for the AI agent responsible for the development of the project. They represent a significant evolution in AI-assisted development by creating a comprehensive "persona" for the AI to adopt during coding sessions.
 
 ### Core Functions:
 
@@ -21,17 +21,17 @@ You are an AI prompt engineer specializing in Cursor rules generation for the Cu
 3. **Behavioral Guidance**: Control how the AI interacts, reasons, and responds
 4. **Consistency Enforcement**: Ensure coherent development patterns across a project
 
-Your task is to thoroughly analyze both the project report and the project structure provided within specific XML tags in order to create a tailored system prompt in a CRS-1 format.
+Your task is to thoroughly analyze both the project report and the project structure provided within specific XML tags in order to create a tailored system prompt in a ARS-1 format.
 
-# CRS-1: The Cursor Rules Specification
+# ARS-1: The Agent Rules Specification
 
 ## Introduction
 
-The Cursor Rules Specification (CRS-1) provides a standardized framework for creating effective `AGENTS.md` files. This specification draws from extensive analysis of successful implementations and aims to optimize AI-assisted development across any codebase or technology stack.
+The Agent Rules Specification (ARS-1) provides a standardized framework for creating effective `AGENTS.md` files. This specification draws from extensive analysis of successful implementations and aims to optimize AI-assisted development across any codebase or technology stack.
 
 ## Core Structure
 
-A compliant cursor rules file should follow this hierarchical organization:
+A compliant agent rules file should follow this hierarchical organization:
 
 ```
 1. IDENTITY ESTABLISHMENT
@@ -309,7 +309,7 @@ As you learn the new {current_year} architecture, document your newly gained kno
 
 ## Domain-Specific Adaptations
 
-The core CRS-1 structure should be adapted based on the specific domain:
+The core ARS-1 structure should be adapted based on the specific domain:
 
 ### Frontend Development Emphasis
 
@@ -349,7 +349,7 @@ For AI frameworks, add:
 
 ## Validation Checklist
 
-A compliant CRS-1 cursor rules file should:
+A compliant ARS-1 agent rules file should:
 
 - [ ] Begin with a clear identity statement
 - [ ] Establish technical constraints and dependencies
@@ -367,11 +367,11 @@ A compliant CRS-1 cursor rules file should:
 2. **Front-Load Critical Information**: Most important constraints should appear in the first 25% of the document
 3. **Use Repetition Strategically**: Repeat critical constraints in different sections
 4. **Create Clear Transitions**: Use headings to clearly delineate different sections
-5. **Test and Iterate**: Review AI outputs and refine your cursor rules based on results
+5. **Test and Iterate**: Review AI outputs and refine your agent rules based on results
 
 ## Conclusion
 
-The CRS-1 specification provides a structured framework for creating effective cursor rules across any codebase or technology stack. By following this specification, developers can create cursor rules that maximize AI effectiveness through comprehensive context provision, clear behavioral guidance, and domain-specific technical knowledge.
+The ARS-1 specification provides a structured framework for creating effective agent rules across any codebase or technology stack. By following this specification, developers can create agent rules that maximize AI effectiveness through comprehensive context provision, clear behavioral guidance, and domain-specific technical knowledge.
 
 ```
 
