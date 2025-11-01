@@ -1,7 +1,7 @@
 .
 ├── __init__.py                # Package initializer for agentrules, filters warnings.
 ├── __main__.py                # Main entry point for running the agentrules CLI application.
-├── analyzer.py                # Core orchestration logic for the multi-phase analysis pipeline.
+├── analyzer.py                # Deprecated wrapper around the modern core.pipeline APIs.
 ├── cli/                       # Contains all code related to the command-line interface.
 │   ├── __init__.py            # CLI package initializer.
 │   ├── app.py                 # Defines the main Typer application and registers subcommands.
@@ -19,6 +19,7 @@
 │   └── ui/                    # Contains user interface components for the CLI.
 │       ├── __init__.py        # UI package initializer.
 │       ├── analysis_view.py   # Renders analysis progress using the Rich library.
+│       ├── event_sink.py      # Bridges analysis events to the Rich progress view.
 │       ├── main_menu.py       # Implements the interactive main menu for the CLI.
 │       ├── settings/          # Interactive flows for configuring different application settings.
 │       │   ├── __init__.py    # Settings UI package initializer.
@@ -114,6 +115,12 @@
 │   │   ├── phase_3.py         # Implements the logic for Phase 3 (Deep Analysis).
 │   │   ├── phase_4.py         # Implements the logic for Phase 4 (Synthesis).
 │   │   └── phase_5.py         # Implements the logic for Phase 5 (Consolidation).
+│   ├── pipeline/              # Modern orchestration, results, and persistence services.
+│   │   ├── __init__.py        # Exposes pipeline settings, orchestrator, and helpers.
+│   │   ├── config.py          # Dataclasses for pipeline settings, snapshots, and results.
+│   │   ├── orchestrator.py    # Coordinates phase execution via AnalysisPipeline.
+│   │   ├── output.py          # Writes pipeline artifacts and returns console summaries.
+│   │   └── snapshot.py        # Builds reusable project metadata for downstream phases.
 │   ├── configuration/         # Runtime configuration package used by CLI and analyzer flows.
 │   │   ├── __init__.py        # Exposes ConfigManager singleton and shared constants.
 │   │   ├── constants.py       # Paths, env var names, and other config constants.
