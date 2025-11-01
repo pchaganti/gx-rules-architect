@@ -23,25 +23,25 @@ def configure_researcher_phase(
     default_key: str | None,
     current_mode: str,
     tavily_available: bool,
+    offline_mode: bool,
 ) -> bool:
     """Handle interactive configuration for the researcher agent."""
 
     console = context.console
 
+    if not tavily_available and not offline_mode:
+        console.print(
+            "[yellow]Add a Tavily API key under Settings → Provider API keys to enable the researcher agent.[/]"
+        )
+        return False
+
     mode_choices = [
         questionary.Choice(
-            title="Auto – enable when Tavily key is available"
-            + (" [current]" if current_mode == "auto" else ""),
-            value="auto",
-        ),
-        questionary.Choice(
-            title="Force on – always run the researcher agent"
-            + (" [current]" if current_mode == "on" else ""),
+            title="On" + (" [current]" if current_mode == "on" else ""),
             value="on",
         ),
         questionary.Choice(
-            title="Disable researcher agent"
-            + (" [current]" if current_mode == "off" else ""),
+            title="Off" + (" [current]" if current_mode == "off" else ""),
             value="off",
         ),
         navigation_choice("Cancel", value="__CANCEL__"),
@@ -59,16 +59,16 @@ def configure_researcher_phase(
         console.print("[yellow]Researcher configuration cancelled.[/]")
         return False
 
-    if mode_selection == "off":
-        if current_mode != "off":
+    desired_mode = mode_selection
+    mode_changed = desired_mode != current_mode
+
+    if desired_mode == "off":
+        if mode_changed:
             configuration.save_researcher_mode("off")
-            console.print("[yellow]Researcher agent disabled for Phase 1.[/]")
+            _render_mode_message(console.print, "off")
             return True
         console.print("[dim]Researcher agent already disabled.[/]")
         return False
-
-    desired_mode = mode_selection
-    mode_changed = desired_mode != current_mode
 
     default_info = model_presets.get_preset_info(default_key) if default_key else None
     current_label, _ = current_labels(current_key)
@@ -115,7 +115,7 @@ def configure_researcher_phase(
     if selection == "__KEEP__":
         if mode_changed:
             configuration.save_researcher_mode(desired_mode)
-            _render_mode_message(console.print, desired_mode, tavily_available)
+            _render_mode_message(console.print, desired_mode)
             return True
         console.print("[dim]No changes made to researcher settings.[/]")
         return False
@@ -138,18 +138,15 @@ def configure_researcher_phase(
 
     if mode_changed:
         configuration.save_researcher_mode(desired_mode)
-        _render_mode_message(console.print, desired_mode, tavily_available)
+        _render_mode_message(console.print, desired_mode)
 
     return preset_changed or mode_changed
 
 
-def _render_mode_message(printer, mode: str, tavily_available: bool) -> None:
+def _render_mode_message(printer, mode: str) -> None:
     """Emit feedback after researcher mode changes."""
 
-    if mode == "auto":
-        if tavily_available:
-            printer("[green]Researcher mode set to auto; runs when Tavily search is available.[/]")
-        else:
-            printer("[yellow]Researcher mode set to auto. Add a Tavily API key to enable runs.[/]")
+    if mode == "on":
+        printer("[green]Researcher agent enabled.[/]")
     else:
-        printer("[green]Researcher mode set to forced on.[/]")
+        printer("[yellow]Researcher agent disabled for Phase 1.[/]")

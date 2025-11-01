@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Mapping
 
 import questionary
@@ -32,7 +33,9 @@ def configure_models(context: CliContext) -> None:
         researcher_mode = configuration.get_researcher_mode()
         tavily_available = configuration.has_tavily_credentials()
 
-        phase_choices = _build_phase_choices(active, researcher_mode, tavily_available)
+        offline_mode = bool(os.getenv("OFFLINE"))
+
+        phase_choices = _build_phase_choices(active, researcher_mode, tavily_available, offline_mode)
         phase_choices.append(navigation_choice("Done", value="__DONE__"))
 
         phase_selection = questionary.select(
@@ -66,6 +69,7 @@ def configure_models(context: CliContext) -> None:
                 default_key,
                 researcher_mode,
                 tavily_available,
+                offline_mode,
             ):
                 updated = True
             continue
@@ -97,6 +101,7 @@ def _build_phase_choices(
     active: Mapping[str, str | None],
     researcher_mode: str,
     tavily_available: bool,
+    offline_mode: bool,
 ) -> list[questionary.Choice | questionary.Separator]:
     phase_choices: list[questionary.Choice | questionary.Separator] = []
     handled_phases: set[str] = set()
@@ -117,15 +122,15 @@ def _build_phase_choices(
 
             researcher_key = active.get("researcher", model_presets.get_default_preset_key("researcher"))
             researcher_model, researcher_provider = current_labels(researcher_key)
-            if researcher_mode == "off":
-                researcher_model = "Disabled"
+            if not tavily_available and not offline_mode:
+                researcher_model = "Add Tavily API key to enable"
                 researcher_provider = ""
             else:
-                mode_suffix = " (auto)" if researcher_mode == "auto" else " (forced)"
-                if researcher_model != "Not configured":
-                    researcher_model = f"{researcher_model}{mode_suffix}"
-                if researcher_mode == "auto" and not tavily_available:
-                    researcher_model += " – awaiting Tavily key"
+                status_label = "On" if researcher_mode == "on" else "Off"
+                if researcher_model == "Not configured":
+                    researcher_model = status_label
+                else:
+                    researcher_model = f"{researcher_model} ({status_label})"
             researcher_title = model_presets.get_phase_title("researcher")
             phase_choices.append(
                 model_display_choice(

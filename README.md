@@ -105,7 +105,7 @@ agentrules keys
 - `agentrules` – interactive main menu (analyze, configure models/outputs, check keys).
 - `agentrules analyze /path/to/project` – full six-phase analysis.
   - `--offline` switches to deterministic dummy providers (also enabled via `OFFLINE=1`).
-- `agentrules configure --models` – assign presets per phase with guided prompts; the Phase 1 → Researcher entry lets you toggle the agent (`Auto`, `On`, `Off`).
+- `agentrules configure --models` – assign presets per phase with guided prompts; the Phase 1 → Researcher entry lets you toggle the agent On/Off once a Tavily key is configured.
 - `agentrules configure --outputs` – toggle `.cursorignore`, `phases_output/`, and custom rules filename.
 - `agentrules configure --logging` – set verbosity (`quiet`, `standard`, `verbose`) or export via `AGENTRULES_LOG_LEVEL`.
 
@@ -115,7 +115,7 @@ agentrules keys
   - `providers` – API keys per provider.
   - `models` – preset IDs applied to each phase (`phase1`, `phase2`, `final`, `researcher`, …).
   - `outputs` – `generate_cursorignore`, `generate_phase_outputs`, `rules_filename`.
-  - `features` – `researcher_mode` (`auto`/`on`/`off`) to control Phase 1 web research (managed from the Researcher row in the models wizard).
+  - `features` – `researcher_mode` (`on`/`off`) to control Phase 1 web research (managed from the Researcher row in the models wizard).
   - `exclusions` – add/remove directories, files, or extensions; choose to respect `.gitignore`.
 - **Runtime helpers** (via `agentrules/core/configuration/manager.py`):
   - `ConfigManager.get_effective_exclusions()` resolves overrides with defaults from `config/exclusions.py`.
@@ -153,7 +153,7 @@ Adjust presets through the CLI (`agentrules configure --models`) or by editing `
 
 - `core/agent_tools/tool_manager.py` normalizes JSON tool schemas for each provider.
 - `config/tools.py` exposes `TOOL_SETS` and a `with_tools_enabled` helper for models that accept function/tool calls.
-- Tavily search (`tavily_web_search`) ships as the default researcher tool. Set `TAVILY_API_KEY` and leave the researcher mode on `Auto` so Phase 1 opts in automatically; switch to `On` or `Off` from the models wizard’s Researcher entry. When disabled (or no key is present), documentation research is skipped; offline runs force the researcher on for smoke coverage. The dependency agent automatically downgrades from “knowledge gaps” mode to its legacy full catalog so downstream agents still receive usable dependency data when research is unavailable.
+- Tavily search (`tavily_web_search`) ships as the default researcher tool. Add `TAVILY_API_KEY` in the provider settings to automatically enable the Researcher agent, then pick the model (or flip it back `Off`) from the models wizard’s Researcher entry. When disabled—or when no key is present—documentation research is skipped; offline runs still exercise the researcher stub for smoke coverage. The dependency agent automatically downgrades from “knowledge gaps” mode to its legacy full catalog so downstream agents still receive usable dependency data when research is unavailable.
 
 ## 🧱 Project Architecture
 

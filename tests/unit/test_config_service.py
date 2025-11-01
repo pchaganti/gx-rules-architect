@@ -93,14 +93,24 @@ class ConfigServiceTestCase(unittest.TestCase):
         level = self.config_manager.resolve_log_level()
         self.assertEqual(level, logging.WARNING)
 
-    def test_researcher_mode_auto_requires_tavily_key(self) -> None:
-        self.assertEqual(self.config_manager.get_researcher_mode(), "auto")
+    def test_researcher_mode_enables_when_tavily_key_added(self) -> None:
+        self.assertEqual(self.config_manager.get_researcher_mode(), "off")
         self.assertFalse(self.config_manager.has_tavily_credentials())
         self.assertFalse(self.config_manager.is_researcher_enabled())
 
         self.config_manager.set_provider_key("tavily", "tavily-test-key")
         self.assertTrue(self.config_manager.has_tavily_credentials())
+        self.assertEqual(self.config_manager.get_researcher_mode(), "on")
         self.assertTrue(self.config_manager.is_researcher_enabled())
+
+    def test_researcher_mode_resets_when_tavily_key_removed(self) -> None:
+        self.config_manager.set_provider_key("tavily", "tavily-test-key")
+        self.assertEqual(self.config_manager.get_researcher_mode(), "on")
+
+        self.config_manager.set_provider_key("tavily", None)
+        self.assertFalse(self.config_manager.has_tavily_credentials())
+        self.assertEqual(self.config_manager.get_researcher_mode(), "off")
+        self.assertFalse(self.config_manager.is_researcher_enabled())
 
     def test_researcher_mode_explicit_overrides(self) -> None:
         self.config_manager.set_researcher_mode("off")
@@ -109,6 +119,9 @@ class ConfigServiceTestCase(unittest.TestCase):
 
         self.config_manager.set_researcher_mode("on")
         self.assertEqual(self.config_manager.get_researcher_mode(), "on")
+        self.assertFalse(self.config_manager.is_researcher_enabled())
+
+        self.config_manager.set_provider_key("tavily", "tavily-test-key")
         self.assertTrue(self.config_manager.is_researcher_enabled())
 
     def test_tree_depth_defaults_set_and_reset(self) -> None:

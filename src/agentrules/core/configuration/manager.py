@@ -43,6 +43,11 @@ class ConfigManager:
     def set_provider_key(self, provider: str, api_key: str | None) -> CLIConfig:
         config = self._repository.load()
         providers.set_provider_key(config, provider, api_key)
+        if provider == "tavily":
+            if api_key:
+                features.set_researcher_mode(config, "on")
+            else:
+                features.set_researcher_mode(config, "off")
         self._repository.save(config)
         self._environment.apply_provider_credentials(config)
         return config
@@ -77,7 +82,7 @@ class ConfigManager:
         self._repository.save(config)
         return config
 
-    def get_researcher_mode(self, default: ResearcherMode = "auto") -> ResearcherMode:
+    def get_researcher_mode(self, default: ResearcherMode = "off") -> ResearcherMode:
         config = self._repository.load()
         previous = config.features.researcher_mode
         normalized = features.get_researcher_mode(config, default)

@@ -7,7 +7,7 @@ from typing import Literal
 
 from agentrules.core.utils.constants import DEFAULT_RULES_FILENAME
 
-ResearcherMode = Literal["auto", "on", "off"]
+ResearcherMode = Literal["on", "off"]
 
 
 @dataclass
@@ -48,10 +48,10 @@ class ExclusionOverrides:
 
 @dataclass
 class FeatureToggles:
-    researcher_mode: ResearcherMode = "auto"
+    researcher_mode: ResearcherMode = "off"
 
     def is_default(self) -> bool:
-        return self.researcher_mode == "auto"
+        return self.researcher_mode == "off"
 
 
 @dataclass
@@ -62,4 +62,3 @@ class CLIConfig:
     outputs: OutputPreferences = field(default_factory=OutputPreferences)
     exclusions: ExclusionOverrides = field(default_factory=ExclusionOverrides)
     features: FeatureToggles = field(default_factory=FeatureToggles)
-

@@ -20,13 +20,17 @@ class EnvironmentManager:
         return self._environ.get(key)
 
     def apply_provider_credentials(self, config: CLIConfig) -> None:
-        for provider, cfg in config.providers.items():
-            env_var = PROVIDER_ENV_MAP.get(provider)
-            if not env_var or not cfg.api_key:
+        for provider, env_var in PROVIDER_ENV_MAP.items():
+            if not env_var:
+                continue
+            cfg = config.providers.get(provider)
+            api_key = cfg.api_key if cfg else None
+            if not api_key:
+                self._environ.pop(env_var, None)
                 continue
             if provider == "gemini":
                 self._environ.pop("GEMINI_API_KEY", None)
-            self._environ.setdefault(env_var, cfg.api_key)
+            self._environ[env_var] = api_key
 
     def resolve_log_level(self, config: CLIConfig, default: int | None = None) -> int:
         env_value = self.getenv(VERBOSITY_ENV_VAR)
@@ -48,4 +52,3 @@ class EnvironmentManager:
     def is_truthy(self, key: str) -> bool:
         value = self.getenv(key)
         return value is not None and value.strip().lower() in TRUTHY_ENV_VALUES
-

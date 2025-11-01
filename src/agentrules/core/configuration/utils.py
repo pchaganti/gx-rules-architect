@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from typing import cast
 
 from .models import ResearcherMode
 
@@ -132,8 +133,10 @@ def exclusion_attr_names(kind: str) -> tuple[str, str]:
 def normalize_researcher_mode(value: object, *, default: ResearcherMode) -> ResearcherMode:
     if isinstance(value, str):
         normalized = value.strip().lower()
-        if normalized in {"auto", "on", "off"}:
-            return normalized  # type: ignore[return-value]
+        if normalized in {"on", "off"}:
+            return cast(ResearcherMode, normalized)
+    if isinstance(value, bool):
+        return "on" if value else "off"
     return default
 
 
@@ -156,4 +159,3 @@ def is_truthy_string(value: str | None) -> bool:
     if value is None:
         return False
     return value.strip().lower() in {"1", "true", "yes", "on"}
-
