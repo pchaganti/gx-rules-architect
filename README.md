@@ -18,9 +18,7 @@
 
 ## 🎥 CLI Demo
 
-<video controls src="docs/assets/media/demo.mp4" width="100%">
-  Your browser does not support the video tag. You can download it [here](docs/assets/media/demo.mp4).
-</video>
+![AgentRules CLI demo](docs/assets/media/demo.gif)
 
 ## Why AgentRules Architect?
 
