@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Any
+from typing import Any, cast
 
 from google.genai import types as genai_types
 from google.protobuf.struct_pb2 import Struct
@@ -66,7 +66,9 @@ class GeminiArchitectParsingTests(unittest.IsolatedAsyncioTestCase):
         arch.client = _GeminiFakeClient()  # type: ignore
         await arch.analyze({})
         config = arch.client.models.last_call["config"]  # type: ignore[index]
-        self.assertEqual(config.thinking_config.thinking_level, genai_types.ThinkingLevel.HIGH)
+        thinking_level = cast(Any, getattr(genai_types, "ThinkingLevel", None))
+        self.assertIsNotNone(thinking_level)
+        self.assertEqual(config.thinking_config.thinking_level, thinking_level.HIGH)
         self.assertIsNone(config.thinking_config.thinking_budget)
 
     async def test_gemini3_disabled_maps_to_thinking_level_low(self):
@@ -74,5 +76,7 @@ class GeminiArchitectParsingTests(unittest.IsolatedAsyncioTestCase):
         arch.client = _GeminiFakeClient()  # type: ignore
         await arch.analyze({})
         config = arch.client.models.last_call["config"]  # type: ignore[index]
-        self.assertEqual(config.thinking_config.thinking_level, genai_types.ThinkingLevel.LOW)
+        thinking_level = cast(Any, getattr(genai_types, "ThinkingLevel", None))
+        self.assertIsNotNone(thinking_level)
+        self.assertEqual(config.thinking_config.thinking_level, thinking_level.LOW)
         self.assertIsNone(config.thinking_config.thinking_budget)

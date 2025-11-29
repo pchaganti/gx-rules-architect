@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from collections.abc import AsyncIterator, Iterator
-from typing import Any
+from typing import Any, cast
 
 from google.genai import types as genai_types
 
@@ -24,6 +24,10 @@ from .response_parser import (
 from .tooling import resolve_tool_config
 
 logger = logging.getLogger("project_extractor")
+
+ThinkingConfig = cast(Any, genai_types.ThinkingConfig)
+ThinkingLevel = cast(Any, getattr(genai_types, "ThinkingLevel", None))
+GenerateContentConfig = cast(Any, genai_types.GenerateContentConfig)
 
 
 DEFAULT_THINKING_BUDGET = 16000
@@ -112,7 +116,7 @@ class GeminiArchitect(BaseArchitect):
         if thinking_config is not None:
             config_kwargs["thinking_config"] = thinking_config
 
-        generation_config = genai_types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+        generation_config = GenerateContentConfig(**config_kwargs) if config_kwargs else None
 
         agent_name = self.name or "Gemini Architect"
         detail_suffix = self._compose_request_detail_suffix(thinking_config, api_tools)
@@ -308,35 +312,35 @@ class GeminiArchitect(BaseArchitect):
             level = self._map_reasoning_mode_to_thinking_level(reasoning_mode)
             if level is None:
                 return None
-            return genai_types.ThinkingConfig(thinking_level=level)
+            return ThinkingConfig(thinking_level=level)
 
         if reasoning_mode == ReasoningMode.DYNAMIC:
-            return genai_types.ThinkingConfig(thinking_budget=DYNAMIC_THINKING_BUDGET)
+            return ThinkingConfig(thinking_budget=DYNAMIC_THINKING_BUDGET)
         if reasoning_mode == ReasoningMode.ENABLED:
-            return genai_types.ThinkingConfig(thinking_budget=DEFAULT_THINKING_BUDGET)
+            return ThinkingConfig(thinking_budget=DEFAULT_THINKING_BUDGET)
         if reasoning_mode == ReasoningMode.DISABLED:
             if self._model_supports_disabling_thinking():
-                return genai_types.ThinkingConfig(thinking_budget=DISABLED_THINKING_BUDGET)
+                return ThinkingConfig(thinking_budget=DISABLED_THINKING_BUDGET)
             logger.debug(
                 "Model %s does not support disabling thinking; falling back to dynamic budget.",
                 self.model_name,
             )
-            return genai_types.ThinkingConfig(thinking_budget=DYNAMIC_THINKING_BUDGET)
+            return ThinkingConfig(thinking_budget=DYNAMIC_THINKING_BUDGET)
         return None
 
     def _map_reasoning_mode_to_thinking_level(
         self,
         reasoning_mode: ReasoningMode,
-    ) -> genai_types.ThinkingLevel | None:
+    ) -> Any | None:
         if reasoning_mode in (ReasoningMode.DISABLED, ReasoningMode.MINIMAL, ReasoningMode.LOW):
-            return genai_types.ThinkingLevel.LOW
+            return ThinkingLevel.LOW if ThinkingLevel else None
         if reasoning_mode in (
             ReasoningMode.ENABLED,
             ReasoningMode.DYNAMIC,
             ReasoningMode.MEDIUM,
             ReasoningMode.HIGH,
         ):
-            return genai_types.ThinkingLevel.HIGH
+            return ThinkingLevel.HIGH if ThinkingLevel else None
         return None
 
     def _model_supports_disabling_thinking(self) -> bool:
